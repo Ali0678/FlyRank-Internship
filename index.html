@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Intelligence: Content Refresh Opportunity Scoring</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.7;
+            color: #222;
+        }
+
+        h1 {
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 45px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .abstract {
+            background: #f5f5f5;
+            padding: 20px;
+            border-left: 4px solid #333;
+        }
+
+        .result {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        img {
+            max-width: 100%;
+            margin: 20px 0;
+        }
+
+        code {
+            background: #f3f3f3;
+            padding: 2px 5px;
+        }
+
+        a {
+            color: #0645ad;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Search Intelligence: Content Refresh Opportunity Scoring</h1>
+
+<p class="subtitle">
+    A simple ML-based approach for prioritizing content pages for review
+</p>
+
+<h2>Abstract</h2>
+
+<div class="abstract">
+    <p>
+        This project asks whether observed search and content signals can help
+        prioritize pages for content refresh review. A page-level dataset was
+        used to construct observable features and compare a simple baseline
+        against an ML ranking approach. The approaches were evaluated using
+        Precision@50 on the same held-out data. The baseline achieved 0.32
+        Precision@50, while the ML model achieved 0.68. The result suggests
+        that the model provided stronger directional decision-support for
+        prioritizing pages in this experiment, without proving that a refresh
+        would cause better search performance.
+    </p>
+</div>
+
+<h2>1. Introduction / Problem Statement</h2>
+
+<p>
+    Content teams often have more pages available for review than they have
+    time to review. The practical decision is therefore which pages should
+    receive attention first.
+</p>
+
+<p>
+    This project investigates whether observed search and content signals can
+    be used to rank pages for refresh review. The output is intended to support
+    prioritization when review time is limited.
+</p>
+
+<p>
+    The project does not attempt to predict Google's algorithm or prove that
+    changing a page causes its search performance to improve.
+</p>
+
+<h2>2. Data</h2>
+
+<p>
+    The analysis uses the FlyRank internship dataset and focuses on
+    anonymized content-level search and performance information.
+</p>
+
+<p>
+    The unit of analysis is one content page at a prediction point. Features
+    include observable signals such as impressions, sessions, CTR, average
+    position, content age, word count, and engagement where available.
+</p>
+
+<p>
+    Client-identifying information, private queries, raw URLs, credentials,
+    and product-decision information were excluded from the public analysis.
+    Future information was also kept separate from the feature window where
+    applicable.
+</p>
+
+<h2>3. Methodology</h2>
+
+<p>
+    The project uses a Refresh / Content Opportunity Scoring approach.
+    Observable page-level signals were used as model features.
+</p>
+
+<p>
+    The baseline is a simple score based primarily on content age and
+    visibility. The ML approach uses a Random Forest classifier to estimate
+    the likelihood of the defined observed outcome.
+</p>
+
+<p>
+    The data was separated into training and held-out evaluation data.
+    Precision@50 was selected as the main metric because the practical task is
+    to identify a small group of pages for review first.
+</p>
+
+<p>
+    Leakage checks were used to avoid using future-window information or
+    product-decision information as model features.
+</p>
+
+<h2>4. Results</h2>
+
+<p>
+    Both approaches were evaluated on the same held-out data.
+</p>
+
+<table>
+    <tr>
+        <th>Method</th>
+        <th>Precision@50</th>
+    </tr>
+    <tr>
+        <td>Baseline</td>
+        <td>0.32</td>
+    </tr>
+    <tr>
+        <td>ML model</td>
+        <td>0.68</td>
+    </tr>
+</table>
+
+<p class="result">
+    Observed improvement: +0.36 Precision@50.
+</p>
+
+<p>
+    The ML model achieved 0.68 Precision@50 compared with 0.32 for the
+    baseline. This is an observed result on the evaluation data and should
+    not be interpreted as causal evidence.
+</p>
+
+<img src="work/outputs/model_vs_baseline.png"
+     alt="Model versus baseline Precision@50">
+
+<h2>5. Limitations & Honest Framing</h2>
+
+<p>
+    This analysis uses observed historical data and cannot prove that
+    refreshing a page causes future performance to improve.
+</p>
+
+<p>
+    The rankings are directional decision-support rather than causal
+    predictions. They do not predict Google's algorithm.
+</p>
+
+<p>
+    The available data may not contain every factor that affects search
+    performance. A highly ranked recommendation can therefore still be
+    incorrect and should be reviewed by a person before action.
+</p>
+
+<h2>6. Ranked Recommendations</h2>
+
+<p>
+    The model produces a ranked queue of pages for refresh review. Each
+    recommendation contains a score, an action label, and a reason code.
+</p>
+
+<p>
+    The full ranked output is available in the repository:
+    <a href="work/outputs/baseline_action_score.csv">
+        baseline_action_score.csv
+    </a>
+</p>
+
+<p>
+    The highest-ranked pages should be treated as pages for earlier human
+    review, not as pages that must automatically be changed.
+</p>
+
+<h2>7. Reproducibility</h2>
+
+<p>
+    The analysis notebook and generated output are available in the project
+    repository.
+</p>
+
+<ul>
+    <li>
+        <a href="work/notebooks/capstone.ipynb">
+            Capstone notebook
+        </a>
+    </li>
+    <li>
+        <a href="work/outputs/baseline_action_score.csv">
+            Ranked recommendation output
+        </a>
+    </li>
+    <li>
+        <a href="work/outputs/model_vs_baseline.png">
+            Model vs baseline chart
+        </a>
+    </li>
+</ul>
+
+<h2>8. Acknowledgments & Data Credit</h2>
+
+<p>
+    Built on the FlyRank ML Internship dataset.
+</p>
+
+<p>
+    <a href="https://flyrank.ai" target="_blank">
+        FlyRank
+    </a>
+</p>
+
+</body>
+</html>
