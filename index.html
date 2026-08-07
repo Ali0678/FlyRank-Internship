@@ -1,272 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Intelligence: Content Refresh Opportunity Scoring</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            line-height: 1.7;
-            color: #222;
-        }
-
-        h1 {
-            line-height: 1.2;
-            margin-bottom: 10px;
-        }
-
-        h2 {
-            margin-top: 45px;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #666;
-            font-size: 1.1em;
-        }
-
-        .abstract {
-            background: #f5f5f5;
-            padding: 20px;
-            border-left: 4px solid #333;
-        }
-
-        .result {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background: #f5f5f5;
-        }
-
-        img {
-            max-width: 100%;
-            margin: 20px 0;
-        }
-
-        code {
-            background: #f3f3f3;
-            padding: 2px 5px;
-        }
-
-        a {
-            color: #0645ad;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search Intelligence: CTR Opportunity Scoring</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.7;
+    color: #222;
+}
+h1, h2 { line-height: 1.2; }
+h1 { font-size: 2.4rem; }
+h2 { margin-top: 45px; }
+.card {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+img {
+    max-width: 100%;
+}
+code {
+    background: #eee;
+    padding: 2px 5px;
+}
+</style>
 </head>
 
 <body>
 
-<h1>Search Intelligence: Content Refresh Opportunity Scoring</h1>
-
-<p class="subtitle">
-    A simple ML-based approach for prioritizing content pages for review
-</p>
+<h1>Search Intelligence: CTR Opportunity Scoring</h1>
 
 <h2>Abstract</h2>
-
-<div class="abstract">
-    <p>
-        This project asks whether observed search and content signals can help
-        prioritize pages for content refresh review. A page-level dataset was
-        used to construct observable features and compare a simple baseline
-        against an ML ranking approach. The approaches were evaluated using
-        Precision@50 on the same held-out data. The baseline achieved 0.32
-        Precision@50, while the ML model achieved 0.68. The result suggests
-        that the model provided stronger directional decision-support for
-        prioritizing pages in this experiment, without proving that a refresh
-        would cause better search performance.
-    </p>
-</div>
-
-<h2>1. Introduction / Problem Statement</h2>
-
 <p>
-    Content teams often have more pages available for review than they have
-    time to review. The practical decision is therefore which pages should
-    receive attention first.
+This project asks whether machine learning can improve the ranking of pages
+for search-performance review compared with a simple baseline rule.
+The analysis uses aggregated search and engagement signals from the FlyRank
+ML Internship dataset and frames the task as decision-support rather than
+causal inference.
+A baseline ranking was compared with a machine-learning ranking using a
+held-out client-based evaluation split.
+On that evaluation split, the baseline achieved 0.06 Precision@50 while
+the ML model achieved 0.98 Precision@50.
+These results are directional evidence that the learned ranking can prioritize
+the observed target more effectively on this evaluation set, but they do not
+prove future production performance or causal effects.
+</p>
+
+<h2>Introduction / Problem Statement</h2>
+<p>
+Search teams have more pages to review than they can inspect manually.
+The goal of this project is therefore to rank pages for review so that human
+attention can be directed toward pages showing measurable search-performance
+opportunity.
+</p>
+
+<h2>Data</h2>
+<p>
+The analysis uses the FlyRank ML Internship warehouse release. The main
+content-performance data contains daily observations with search and
+engagement measurements such as impressions, clicks, average position,
+sessions, engaged sessions, and scroll events.
 </p>
 
 <p>
-    This project investigates whether observed search and content signals can
-    be used to rank pages for refresh review. The output is intended to support
-    prioritization when review time is limited.
+The modeling dataset contains 105,903 page-level observations. The observed
+data spans January 27, 2025 through June 30, 2026.
+The analysis uses public-safe hashed client and content identifiers rather
+than client names, domains, private queries, or credentials.
+</p>
+
+<h2>Methodology</h2>
+<p>
+The unit of analysis is a content page within a client. Features summarize
+observed search and engagement behavior during the current measurement
+window.
 </p>
 
 <p>
-    The project does not attempt to predict Google's algorithm or prove that
-    changing a page causes its search performance to improve.
-</p>
-
-<h2>2. Data</h2>
-
-<p>
-    The analysis uses the FlyRank internship dataset and focuses on
-    anonymized content-level search and performance information.
+The target represents whether the page experienced the defined CTR
+opportunity in the future window. The baseline uses a simple ranking rule,
+while the ML model learns a ranking from the available signals.
 </p>
 
 <p>
-    The unit of analysis is one content page at a prediction point. Features
-    include observable signals such as impressions, sessions, CTR, average
-    position, content age, word count, and engagement where available.
+Validation uses a client-level holdout so that the evaluation includes
+clients not used during training. There were 67,422 training observations
+from 34 clients and 9,839 test observations from 9 clients.
+Future-window information was excluded from the model features.
 </p>
 
-<p>
-    Client-identifying information, private queries, raw URLs, credentials,
-    and product-decision information were excluded from the public analysis.
-    Future information was also kept separate from the feature window where
-    applicable.
-</p>
-
-<h2>3. Methodology</h2>
-
-<p>
-    The project uses a Refresh / Content Opportunity Scoring approach.
-    Observable page-level signals were used as model features.
-</p>
-
-<p>
-    The baseline is a simple score based primarily on content age and
-    visibility. The ML approach uses a Random Forest classifier to estimate
-    the likelihood of the defined observed outcome.
-</p>
-
-<p>
-    The data was separated into training and held-out evaluation data.
-    Precision@50 was selected as the main metric because the practical task is
-    to identify a small group of pages for review first.
-</p>
-
-<p>
-    Leakage checks were used to avoid using future-window information or
-    product-decision information as model features.
-</p>
-
-<h2>4. Results</h2>
-
-<p>
-    Both approaches were evaluated on the same held-out data.
-</p>
+<h2>Results</h2>
 
 <table>
-    <tr>
-        <th>Method</th>
-        <th>Precision@50</th>
-    </tr>
-    <tr>
-        <td>Baseline</td>
-        <td>0.32</td>
-    </tr>
-    <tr>
-        <td>ML model</td>
-        <td>0.68</td>
-    </tr>
+<tr>
+<th>Method</th>
+<th>Precision@50</th>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>0.06</td>
+</tr>
+<tr>
+<td>ML model</td>
+<td>0.98</td>
+</tr>
 </table>
 
-<p class="result">
-    Observed improvement: +0.36 Precision@50.
-</p>
-
 <p>
-    The ML model achieved 0.68 Precision@50 compared with 0.32 for the
-    baseline. This is an observed result on the evaluation data and should
-    not be interpreted as causal evidence.
+On the held-out evaluation set, the ML ranking produced substantially higher
+Precision@50 than the baseline. This is an observed evaluation result and
+should not be interpreted as proof of production performance.
 </p>
 
-<img src="work/outputs/model_vs_baseline.png"
-     alt="Model versus baseline Precision@50">
+<img src="work/outputs/charts/model_vs_baseline.png"
+     alt="Model versus baseline Precision at 50">
 
-<h2>5. Limitations & Honest Framing</h2>
-
-<p>
-    This analysis uses observed historical data and cannot prove that
-    refreshing a page causes future performance to improve.
-</p>
-
-<p>
-    The rankings are directional decision-support rather than causal
-    predictions. They do not predict Google's algorithm.
-</p>
-
-<p>
-    The available data may not contain every factor that affects search
-    performance. A highly ranked recommendation can therefore still be
-    incorrect and should be reviewed by a person before action.
-</p>
-
-<h2>6. Ranked Recommendations</h2>
-
-<p>
-    The model produces a ranked queue of pages for refresh review. Each
-    recommendation contains a score, an action label, and a reason code.
-</p>
-
-<p>
-    The full ranked output is available in the repository:
-    <a href="work/outputs/baseline_action_score.csv">
-        baseline_action_score.csv
-    </a>
-</p>
-
-<p>
-    The highest-ranked pages should be treated as pages for earlier human
-    review, not as pages that must automatically be changed.
-</p>
-
-<h2>7. Reproducibility</h2>
-
-<p>
-    The analysis notebook and generated output are available in the project
-    repository.
-</p>
-
+<h2>Limitations & Honest Framing</h2>
 <ul>
-    <li>
-        <a href="work/notebooks/capstone.ipynb">
-            Capstone notebook
-        </a>
-    </li>
-    <li>
-        <a href="work/outputs/baseline_action_score.csv">
-            Ranked recommendation output
-        </a>
-    </li>
-    <li>
-        <a href="work/outputs/model_vs_baseline.png">
-            Model vs baseline chart
-        </a>
-    </li>
+<li>The analysis is observational rather than experimental.</li>
+<li>The results do not prove that any search-engine algorithm factor caused an outcome.</li>
+<li>The evaluation measures performance on the available held-out data and does not guarantee future performance.</li>
+<li>Search behavior can be affected by seasonality, consolidation, changes in demand, and other factors not captured by the model.</li>
+<li>The output should be treated as decision-support for human review.</li>
 </ul>
 
-<h2>8. Acknowledgments & Data Credit</h2>
-
+<h2>Ranked Recommendations</h2>
 <p>
-    Built on the FlyRank ML Internship dataset.
+The resulting ranked queue provides a practical review order. Pages near the
+top of the ranking should be reviewed first because their observed signals
+match the learned opportunity pattern most strongly.
 </p>
 
 <p>
-    <a href="https://flyrank.ai" target="_blank">
-        FlyRank
-    </a>
+The recommendation is not to automatically change every highly ranked page.
+Instead, use the ranking to prioritize human investigation and then consider
+the appropriate content or metadata action based on the page context.
+</p>
+
+<h2>Reproducibility</h2>
+<p>
+The notebooks and generated outputs used for this analysis are available in
+the project repository under <code>work/</code>.
+</p>
+
+<p>
+The main capstone notebook is:
+<code>work/notebooks/capstone.ipynb</code>
+</p>
+
+<h2>Acknowledgments & Data Credit</h2>
+<p>
+Built on the FlyRank ML Internship dataset.
+</p>
+
+<p>
+<a href="https://flyrank.ai" target="_blank">FlyRank</a>
 </p>
 
 </body>
